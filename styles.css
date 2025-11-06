@@ -1315,6 +1315,14 @@ input::placeholder, textarea::placeholder {
     min-height: 0;
 }
 
+.booking-popup-note {
+    text-align: center;
+    font-size: 15px;
+    color: #00ADB5;
+    margin: 24px 20px 0;
+    font-weight: 500;
+}
+
 #booking-popup-embed {
     width: 100%;
     min-height: 700px;

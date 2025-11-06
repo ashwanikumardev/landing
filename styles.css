@@ -1455,50 +1455,77 @@ input::placeholder, textarea::placeholder {
     
     .home-illustrations {
         order: 3;
-        margin-top: 24px;
+        margin-top: 40px;
+        width: 100%;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+        height: 350px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .doodles-home {
+        width: 320px;
+        height: 320px;
+    }
+
+    .illustration-home {
+        width: 240px;
+        height: 210px;
+        right: -30px;
+        top: 50%;
+    }
+
+    .decorative-circle {
+        width: 200px;
+        height: 16px;
+        bottom: -30px;
+        right: 50px;
     }
     
     .floating-circle-1 {
-        width: 44px;
-        height: 44px;
-        top: 6%;
-        left: -12px;
+        width: 40px;
+        height: 40px;
+        top: 8%;
+        left: 5%;
     }
 
     .floating-circle-2 {
-        width: 30px;
-        height: 30px;
-        bottom: 24%;
-        right: -12px;
+        width: 32px;
+        height: 32px;
+        bottom: 20%;
+        right: 8%;
     }
 
     .floating-circle-3 {
         width: 28px;
         height: 28px;
-        top: 55%;
-        left: 18%;
+        top: 50%;
+        left: 12%;
     }
 
     .floating-square {
         width: 36px;
         height: 36px;
-        right: -24px;
-        top: 48%;
+        right: 5%;
+        top: 45%;
     }
 
     .floating-square-2 {
-        width: 34px;
-        height: 34px;
-        left: -18px;
-        bottom: 38%;
+        width: 32px;
+        height: 32px;
+        left: 8%;
+        bottom: 35%;
     }
 
     .floating-triangle-1 {
-        border-left: 18px solid transparent;
-        border-right: 18px solid transparent;
-        border-bottom: 30px solid rgba(0, 173, 181, 0.3);
-        top: 32%;
-        right: 4%;
+        border-left: 16px solid transparent;
+        border-right: 16px solid transparent;
+        border-bottom: 28px solid rgba(0, 173, 181, 0.3);
+        top: 28%;
+        right: 10%;
     }
     
     .about-section,
@@ -1821,6 +1848,15 @@ input::placeholder, textarea::placeholder {
     
     .home-illustrations {
         order: 3;
+        margin-top: 32px;
+        width: 100%;
+        max-width: 320px;
+        margin-left: auto;
+        margin-right: auto;
+        height: 280px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     
     .btn {
@@ -1830,70 +1866,66 @@ input::placeholder, textarea::placeholder {
         padding: 10px 20px;
     }
     
-    .home-illustrations {
-        margin-top: 32px;
-        height: auto;
-    }
-    
     .doodles-home {
-        width: 240px;
-        height: 240px;
+        width: 260px;
+        height: 260px;
     }
     
     .illustration-home {
-        width: 180px;
-        height: 160px;
-        right: -20px;
+        width: 200px;
+        height: 175px;
+        right: -25px;
+        top: 50%;
     }
     
     .decorative-circle {
-        width: 160px;
+        width: 170px;
         height: 14px;
-        bottom: -50px;
-        right: 30px;
+        bottom: -40px;
+        right: 40px;
     }
 
     .floating-circle-1 {
-        width: 34px;
-        height: 34px;
-        left: -8px;
-        top: 8%;
+        width: 32px;
+        height: 32px;
+        left: 5%;
+        top: 10%;
     }
 
     .floating-circle-2 {
-        width: 24px;
-        height: 24px;
-        bottom: 28%;
-        right: -10px;
+        width: 26px;
+        height: 26px;
+        bottom: 25%;
+        right: 8%;
     }
 
     .floating-circle-3 {
-        width: 22px;
-        height: 22px;
-        top: 58%;
-        left: 16%;
+        width: 24px;
+        height: 24px;
+        top: 52%;
+        left: 10%;
     }
 
     .floating-square {
-        width: 28px;
-        height: 28px;
-        right: -18px;
-        top: 50%;
+        width: 30px;
+        height: 30px;
+        right: 6%;
+        top: 48%;
     }
 
     .floating-square-2 {
-        width: 26px;
-        height: 26px;
-        left: -12px;
-        bottom: 36%;
+        width: 28px;
+        height: 28px;
+        left: 8%;
+        bottom: 38%;
     }
 
     .floating-triangle-1 {
-        border-left: 14px solid transparent;
-        border-right: 14px solid transparent;
-        border-bottom: 25px solid rgba(0, 173, 181, 0.3);
-        top: 34%;
-        right: 6%;
+        border-left: 13px solid transparent;
+        border-right: 13px solid transparent;
+        border-bottom: 22px solid rgba(0, 173, 181, 0.3);
+        top: 30%;
+        right: 12%;
     }
     
     .about-section,

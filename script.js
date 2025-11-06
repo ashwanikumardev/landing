@@ -184,3 +184,45 @@ function addMouseFollowEffect(section, elementsSelector) {
 addMouseFollowEffect('.home-section', '.floating-element');
 addMouseFollowEffect('.contact-section', '.contact-float-element');
 addMouseFollowEffect('.footer', '.footer-floating-element');
+
+// Booking Popup on Main Page - Show after 8 seconds
+const bookingPopup = document.getElementById('bookingPopup');
+const closePopupBtn = document.getElementById('closePopup');
+
+// Check if popup was already shown in this session
+const popupShown = sessionStorage.getItem('bookingPopupShown');
+
+if (!popupShown && bookingPopup) {
+    // Show popup after 8 seconds
+    setTimeout(() => {
+        bookingPopup.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        sessionStorage.setItem('bookingPopupShown', 'true');
+    }, 8000);
+}
+
+// Close popup functionality
+if (closePopupBtn) {
+    closePopupBtn.addEventListener('click', function() {
+        bookingPopup.classList.remove('active');
+        document.body.style.overflow = ''; // Restore scrolling
+    });
+}
+
+// Close popup when clicking outside
+if (bookingPopup) {
+    bookingPopup.addEventListener('click', function(e) {
+        if (e.target === bookingPopup) {
+            bookingPopup.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+}
+
+// Allow Escape key to close popup
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && bookingPopup && bookingPopup.classList.contains('active')) {
+        bookingPopup.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});

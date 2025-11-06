@@ -188,6 +188,7 @@ addMouseFollowEffect('.footer', '.footer-floating-element');
 // Booking Popup on Main Page - Show after 8 seconds
 const bookingPopup = document.getElementById('bookingPopup');
 const closePopupBtn = document.getElementById('closePopup');
+const bookingEmbed = document.getElementById('booking-popup-embed');
 
 // Check if popup was already shown in this session
 const popupShown = sessionStorage.getItem('bookingPopupShown');
@@ -198,6 +199,22 @@ if (!popupShown && bookingPopup) {
         bookingPopup.classList.add('active');
         document.body.style.overflow = 'hidden'; // Prevent background scrolling
         sessionStorage.setItem('bookingPopupShown', 'true');
+        
+        // Hide loader when iframe loads
+        if (bookingEmbed) {
+            const checkEmbed = setInterval(() => {
+                const iframe = bookingEmbed.querySelector('iframe');
+                if (iframe) {
+                    const loader = document.querySelector('.booking-loader');
+                    if (loader) {
+                        setTimeout(() => {
+                            loader.style.display = 'none';
+                        }, 1000);
+                    }
+                    clearInterval(checkEmbed);
+                }
+            }, 500);
+        }
     }, 8000);
 }
 

@@ -1326,6 +1326,39 @@ input::placeholder, textarea::placeholder {
     min-height: 700px !important;
 }
 
+.booking-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #393E46;
+}
+
+.booking-loader p {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #00ADB5;
+}
+
+.loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #EEEEEE;
+    border-top: 4px solid #00ADB5;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#booking-popup-embed:not(:empty) ~ .booking-loader {
+    display: none;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .home-content {

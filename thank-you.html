@@ -20,6 +20,7 @@
             align-items: center;
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
         }
 
         .thank-you-container {
@@ -30,6 +31,8 @@
             border-radius: 24px;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
         }
 
         .success-icon {
@@ -109,6 +112,126 @@
             opacity: 0.7;
         }
 
+        /* Booking Popup Modal */
+        .booking-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .booking-modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .booking-content {
+            background: #FFFFFF;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow: hidden;
+            position: relative;
+            animation: slideUp 0.4s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .booking-header {
+            background: linear-gradient(135deg, #00ADB5, #00d4dd);
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .booking-header h2 {
+            color: #FFFFFF;
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #FFFFFF;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .booking-body {
+            padding: 0;
+            height: 600px;
+            overflow-y: auto;
+        }
+
+        #booking-embed {
+            width: 100%;
+            min-height: 600px;
+        }
+
+        .btn-book {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #00ADB5, #00d4dd);
+            color: #FFFFFF;
+            text-decoration: none;
+            border-radius: 24px;
+            font-size: 18px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 173, 181, 0.3);
+            border: none;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        .btn-book:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(0, 173, 181, 0.5);
+        }
+
         @media (max-width: 768px) {
             .thank-you-container {
                 padding: 40px 24px;
@@ -125,6 +248,24 @@
             .btn {
                 font-size: 16px;
                 padding: 12px 24px;
+            }
+
+            .btn-book {
+                font-size: 16px;
+                padding: 12px 24px;
+            }
+
+            .booking-content {
+                max-width: 100%;
+                border-radius: 16px;
+            }
+
+            .booking-header h2 {
+                font-size: 18px;
+            }
+
+            .booking-body {
+                height: 500px;
             }
         }
     </style>
@@ -144,6 +285,13 @@
             I'll get back to you as soon as possible.
         </p>
         
+        <button class="btn-book" id="bookMeetingBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 7V3M16 7V3M7 11H17M5 21H19C20.1046 21 21 20.1046 21 19V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V19C3 20.1046 3.89543 21 5 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Book a Meeting
+        </button>
+        
         <a href="index.html" class="btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -151,23 +299,84 @@
             Back to Home
         </a>
         
-        <p class="countdown">Redirecting in <span id="countdown">5</span> seconds...</p>
+        <p class="countdown">Redirecting in <span id="countdown">10</span> seconds...</p>
     </div>
 
+    <!-- Booking Modal -->
+    <div class="booking-modal" id="bookingModal">
+        <div class="booking-content">
+            <div class="booking-header">
+                <h2>📅 Schedule a Meeting</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="booking-body">
+                <div id="booking-embed" data-src="https://superprofile.bio/bookings/ashwaniyadav00?sessionId=690c12078ad42000139095db&type=embedSession&embedBgColor=0771F3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SuperProfile Booking Embed Script -->
+    <script id='cosmofeed-embed-booking' src='https://cosmofeed.com/assets/embed/booking-embed.js'></script>
+
     <script>
-        // Auto redirect after 5 seconds
-        let seconds = 5;
+        // Booking Modal functionality
+        const bookMeetingBtn = document.getElementById('bookMeetingBtn');
+        const bookingModal = document.getElementById('bookingModal');
+        const closeModal = document.getElementById('closeModal');
+        let countdownInterval;
+        
+        // Open booking modal
+        bookMeetingBtn.addEventListener('click', function() {
+            bookingModal.classList.add('active');
+            // Pause countdown when modal opens
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+        });
+        
+        // Close modal
+        closeModal.addEventListener('click', function() {
+            bookingModal.classList.remove('active');
+            // Resume countdown
+            startCountdown();
+        });
+        
+        // Close modal when clicking outside
+        bookingModal.addEventListener('click', function(e) {
+            if (e.target === bookingModal) {
+                bookingModal.classList.remove('active');
+                startCountdown();
+            }
+        });
+        
+        // Auto redirect countdown
+        let seconds = 10;
         const countdownElement = document.getElementById('countdown');
         
-        const interval = setInterval(() => {
-            seconds--;
-            countdownElement.textContent = seconds;
-            
-            if (seconds <= 0) {
-                clearInterval(interval);
-                window.location.href = 'index.html';
+        function startCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
             }
-        }, 1000);
+            
+            countdownInterval = setInterval(() => {
+                seconds--;
+                countdownElement.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval);
+                    window.location.href = 'index.html';
+                }
+            }, 1000);
+        }
+        
+        // Start countdown on page load
+        startCountdown();
+        
+        // Show booking popup automatically after 2 seconds
+        setTimeout(() => {
+            bookingModal.classList.add('active');
+            clearInterval(countdownInterval);
+        }, 2000);
     </script>
 </body>
 </html>

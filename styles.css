@@ -1829,6 +1829,58 @@ input::placeholder, textarea::placeholder {
     /* removed responsive rules for tech logos */
 }
 
+/* WhatsApp Floating Button */
+.whatsapp-float {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    bottom: 30px;
+    right: 30px;
+    background-color: #25d366;
+    color: #FFF;
+    border-radius: 50px;
+    text-align: center;
+    font-size: 30px;
+    box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    visibility: hidden;
+}
+
+.whatsapp-float.visible {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+.whatsapp-float:hover {
+    background-color: #128C7E;
+    color: #FFF;
+    box-shadow: 0 15px 30px rgba(37, 211, 102, 0.4);
+    transform: translateY(-5px);
+}
+
+.whatsapp-float svg {
+    width: 32px;
+    height: 32px;
+}
+
+/* Animation for the WhatsApp button */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.whatsapp-float:hover {
+    animation: float 2s ease-in-out infinite;
+}
+
 /* Extra small devices */
 @media (max-width: 480px) {
     .navbar {

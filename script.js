@@ -47,6 +47,14 @@ filterButtons.forEach(button => {
     });
 });
 
+// Show WhatsApp button after 4 seconds
+setTimeout(() => {
+    const whatsappButton = document.getElementById('whatsappButton');
+    if (whatsappButton) {
+        whatsappButton.classList.add('visible');
+    }
+}, 4000);
+
 // Form submission is handled by FormSubmit.co
 // Set dynamic redirect URL based on current location
 document.addEventListener('DOMContentLoaded', function() {

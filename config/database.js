@@ -1,53 +1,55 @@
 const mongoose = require('mongoose');
-const logger = require('./logger');
 
 const connectDB = async () => {
   try {
     // Don't connect if no URI provided
     if (!process.env.MONGODB_URI) {
-      logger.warn('MONGODB_URI not provided, skipping database connection');
+      console.warn('MONGODB_URI not provided, skipping database connection');
       return null;
     }
 
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      // Connection options
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
+    // Optimized connection options for Vercel serverless
+    const options = {
+      maxPoolSize: 1, // Reduced for serverless
+      minPoolSize: 0,
+      serverSelectionTimeoutMS: 10000, // Increased timeout
       socketTimeoutMS: 45000,
-    });
+      family: 4, // Force IPv4
+      retryWrites: true,
+      w: 'majority'
+    };
 
-    logger.info(`MongoDB Connected: ${conn.connection.host}`);
+    console.log('Attempting MongoDB connection...');
+
+    const conn = await mongoose.connect(process.env.MONGODB_URI, options);
+
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
 
     // Connection event listeners
     mongoose.connection.on('error', (err) => {
-      logger.error(`MongoDB connection error: ${err}`);
+      console.error(`MongoDB connection error: ${err}`);
     });
 
     mongoose.connection.on('disconnected', () => {
-      logger.warn('MongoDB disconnected');
+      console.warn('MongoDB disconnected');
     });
 
-    // Graceful shutdown (only in non-serverless environments)
-    if (!process.env.VERCEL) {
-      process.on('SIGINT', async () => {
-        await mongoose.connection.close();
-        logger.info('MongoDB connection closed through app termination');
-        process.exit(0);
-      });
-    }
+    mongoose.connection.on('connected', () => {
+      console.log('MongoDB connected event fired');
+    });
 
     return conn;
   } catch (error) {
-    logger.error(`Error connecting to MongoDB: ${error.message}`);
+    console.error(`Error connecting to MongoDB: ${error.message}`);
+    console.error('Full error:', error);
 
     // In serverless, don't exit - just return null
     if (process.env.VERCEL) {
-      logger.warn('Continuing without database connection in serverless environment');
+      console.warn('Continuing without database connection in serverless environment');
       return null;
     }
 
-    // In traditional server, exit
-    process.exit(1);
+    throw error;
   }
 };
 

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="<%= description %>">
+  <meta name="keywords" content="<%= keywords || 'blog, seo, content' %>">
+  
+  <!-- SEO Meta Tags -->
+  <title><%= title %></title>
+  <meta property="og:title" content="<%= title %>">
+  <meta property="og:description" content="<%= description %>">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= title %>">
+  <meta name="twitter:description" content="<%= description %>">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <nav class="nav">
+        <a href="/" class="logo"><%= process.env.SITE_NAME || 'SEO Blog' %></a>
+        <ul class="nav-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/#articles">Articles</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <%- body %>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; <%= new Date().getFullYear() %> <%= process.env.SITE_NAME || 'SEO Blog' %>. All rights reserved.</p>
+      <p class="footer-links">
+        <a href="/sitemap.xml">Sitemap</a> | 
+        <a href="/robots.txt">Robots</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %>
+    </title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <a href="/" class="logo">
+                    <%= process.env.SITE_NAME || 'SEO Blog' %>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container error-container">
+            <div class="error-content">
+                <h1 class="error-code">500</h1>
+                <h2 class="error-title">
+                    <%= title %>
+                </h2>
+                <p class="error-message">
+                    <%= message %>
+                </p>
+                <a href="/" class="btn-primary">Go Home</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; <%= new Date().getFullYear() %>
+                    <%= process.env.SITE_NAME || 'SEO Blog' %>. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

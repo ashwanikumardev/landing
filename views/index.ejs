@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="<%= description %>">
+    <title>
+        <%= title %>
+    </title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <!-- Header Top -->
+    <div class="header-top">
+        <div class="container">
+            <span>
+                <%= new Date().toLocaleDateString('en-US', { weekday: 'long' , year: 'numeric' , month: 'long' ,
+                    day: 'numeric' }) %>
+            </span>
+        </div>
+    </div>
+
+    <!-- Header Main -->
+    <header class="header">
+        <div class="header-main">
+            <div class="container">
+                <div class="header-content">
+                    <a href="/" class="logo">Aug<span>Codex</span></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="container">
+                <ul class="nav-links">
+                    <li><a href="/" class="active">Home</a></li>
+                    <% if (categories && categories.length> 0) { %>
+                        <% categories.forEach(category=> { %>
+                            <li><a href="/category/<%= category %>">
+                                    <%= category %>
+                                </a></li>
+                            <% }); %>
+                                <% } %>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero-title">Welcome to <%= title %>
+            </h1>
+            <p class="hero-subtitle">
+                <%= description %>
+            </p>
+
+            <% if (stats) { %>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-number">
+                            <%= stats.totalArticles %>
+                        </span>
+                        <span class="stat-label">Articles</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">
+                            <%= stats.totalViews.toLocaleString() %>
+                        </span>
+                        <span class="stat-label">Total Views</span>
+                    </div>
+                </div>
+                <% } %>
+        </div>
+    </section>
+
+    <!-- Articles Section -->
+    <section class="articles-section">
+        <div class="container">
+            <h2 class="section-title">Latest News</h2>
+
+            <% if (articles && articles.length> 0) { %>
+                <div class="articles-grid">
+                    <% articles.forEach(article=> { %>
+                        <article class="article-card">
+                            <div class="article-image">
+                                <% if (article.thumbnail) { %>
+                                    <img src="/images/thumbnails/<%= article.thumbnail %>" alt="<%= article.title %>">
+                                    <% } else { %>
+                                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='240'%3E%3Crect fill='%23f8f9fa' width='400' height='240'/%3E%3Ctext fill='%238d99ae' font-family='Arial' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3E<%= article.category || 'News' %>%3C/text%3E%3C/svg%3E"
+                                            alt="<%= article.title %>">
+                                        <% } %>
+                                            <% if (article.category) { %>
+                                                <span class="article-category">
+                                                    <%= article.category %>
+                                                </span>
+                                                <% } %>
+                            </div>
+
+                            <div class="article-content">
+                                <div class="article-meta">
+                                    <time datetime="<%= article.publishedAt %>">
+                                        <%= new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short' ,
+                                            day: 'numeric' , year: 'numeric' }) %>
+                                    </time>
+                                    <span class="article-views">
+                                        <%= article.views %> views
+                                    </span>
+                                </div>
+
+                                <h3 class="article-title">
+                                    <a href="/blog/<%= article.slug %>">
+                                        <%= article.title %>
+                                    </a>
+                                </h3>
+
+                                <p class="article-excerpt">
+                                    <%= article.metaDescription %>
+                                </p>
+
+                                <a href="/blog/<%= article.slug %>" class="read-more">Read More →</a>
+                            </div>
+                        </article>
+                        <% }); %>
+                </div>
+                <% } else { %>
+                    <div class="no-articles">
+                        <p>No articles published yet. Check back soon for the latest news!</p>
+                    </div>
+                    <% } %>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; <%= new Date().getFullYear() %>
+                    <%= title %>. All rights reserved.</p>
+            <p class="footer-links">
+                <a href="/sitemap.xml">Sitemap</a> |
+                <a href="/robots.txt">Robots</a> |
+                <a href="/health">Status</a>
+            </p>
+        </div>
+    </footer>
+</body>
+
+</html>

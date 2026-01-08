@@ -1,90 +1,73 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const helmet = require('helmet');
-const compression = require('compression');
-const connectDB = require('./config/database');
-const logger = require('./config/logger');
-const routes = require('./routes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Connect to database
-connectDB();
-
-// Middleware
-app.use(helmet({
-    contentSecurityPolicy: false, // Disable for development, configure properly in production
-}));
-app.use(compression());
+// Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// View engine setup
+// View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Routes
-app.use('/', routes);
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        env: {
+            nodeEnv: process.env.NODE_ENV,
+            hasMongoUri: !!process.env.MONGODB_URI,
+            hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+            isVercel: !!process.env.VERCEL
+        }
+    });
+});
+
+// Try to load routes with error handling
+try {
+    const routes = require('./routes');
+    app.use('/', routes);
+} catch (error) {
+    console.error('Error loading routes:', error);
+
+    // Fallback route
+    app.get('/', (req, res) => {
+        res.send(`
+            <h1>AugCodex</h1>
+            <p>Server is running but routes failed to load.</p>
+            <p>Error: ${error.message}</p>
+            <p><a href="/api/health">Check Health</a></p>
+        `);
+    });
+}
 
 // 404 handler
 app.use((req, res) => {
-    res.status(404).render('404', {
-        title: '404 - Page Not Found',
-        message: 'The page you are looking for does not exist.',
-    });
+    res.status(404).send('404 - Page Not Found');
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-    logger.error(`Unhandled error: ${err.message}`);
-    logger.error(err.stack);
-
-    res.status(500).render('error', {
-        title: 'Error',
-        message: process.env.NODE_ENV === 'production'
-            ? 'Something went wrong'
-            : err.message,
+    console.error('Error:', err);
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message,
+        stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
     });
 });
 
-// Only start server if not in Vercel (serverless)
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    // Start cron jobs only in non-serverless environment
-    const dailyArticleJob = require('./jobs/dailyArticle.job');
-    const imageCleanupJob = require('./jobs/imageCleanup.job');
+// Only start server locally
+if (!process.env.VERCEL) {
+    const PORT = process.env.PORT || 3000;
 
     app.listen(PORT, () => {
-        logger.info(`========================================`);
-        logger.info(`Server running on port ${PORT}`);
-        logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-        logger.info(`URL: http://localhost:${PORT}`);
-        logger.info(`========================================`);
-
-        // Start cron jobs
-        dailyArticleJob.start();
-        imageCleanupJob.start();
-    });
-
-    // Graceful shutdown
-    process.on('SIGTERM', () => {
-        logger.info('SIGTERM signal received: closing HTTP server');
-        dailyArticleJob.stop();
-        imageCleanupJob.stop();
-        process.exit(0);
-    });
-
-    process.on('SIGINT', () => {
-        logger.info('SIGINT signal received: closing HTTP server');
-        dailyArticleJob.stop();
-        imageCleanupJob.stop();
-        process.exit(0);
+        console.log(`Server running on port ${PORT}`);
     });
 }
 
-// Export for Vercel serverless
+// Export for Vercel
 module.exports = app;

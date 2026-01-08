@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Health check endpoint
+// Health check endpoint (always works)
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
@@ -27,27 +27,57 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Try to load routes with error handling
+// Initialize database connection with error handling
+let dbConnected = false;
+const connectDB = require('./config/database');
+
+connectDB()
+    .then(() => {
+        dbConnected = true;
+        console.log('Database connected successfully');
+    })
+    .catch(err => {
+        console.error('Database connection failed:', err.message);
+        dbConnected = false;
+    });
+
+// Load routes with error handling
 try {
     const routes = require('./routes');
     app.use('/', routes);
 } catch (error) {
     console.error('Error loading routes:', error);
 
-    // Fallback route
+    // Fallback routes if main routes fail
     app.get('/', (req, res) => {
-        res.send(`
-            <h1>AugCodex</h1>
-            <p>Server is running but routes failed to load.</p>
-            <p>Error: ${error.message}</p>
-            <p><a href="/api/health">Check Health</a></p>
+        if (!dbConnected) {
+            return res.status(503).send(`
+                <h1>AugCodex - Database Connection Error</h1>
+                <p>The database is not connected. Please check:</p>
+                <ul>
+                    <li>MongoDB Atlas is accessible</li>
+                    <li>Network access is configured (0.0.0.0/0)</li>
+                    <li>MONGODB_URI environment variable is correct</li>
+                </ul>
+                <p><a href="/api/health">Check Health Status</a></p>
+            `);
+        }
+
+        res.status(500).send(`
+            <h1>AugCodex - Server Error</h1>
+            <p>Routes failed to load: ${error.message}</p>
+            <p><a href="/api/health">Check Health Status</a></p>
         `);
     });
 }
 
 // 404 handler
 app.use((req, res) => {
-    res.status(404).send('404 - Page Not Found');
+    res.status(404).send(`
+        <h1>404 - Page Not Found</h1>
+        <p>The page you're looking for doesn't exist.</p>
+        <p><a href="/">Go Home</a></p>
+    `);
 });
 
 // Error handler

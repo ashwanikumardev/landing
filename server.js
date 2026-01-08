@@ -6,8 +6,6 @@ const compression = require('compression');
 const connectDB = require('./config/database');
 const logger = require('./config/logger');
 const routes = require('./routes');
-const dailyArticleJob = require('./jobs/dailyArticle.job');
-const imageCleanupJob = require('./jobs/imageCleanup.job');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -54,32 +52,39 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server
-app.listen(PORT, () => {
-    logger.info(`========================================`);
-    logger.info(`Server running on port ${PORT}`);
-    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger.info(`URL: http://localhost:${PORT}`);
-    logger.info(`========================================`);
+// Only start server if not in Vercel (serverless)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    // Start cron jobs only in non-serverless environment
+    const dailyArticleJob = require('./jobs/dailyArticle.job');
+    const imageCleanupJob = require('./jobs/imageCleanup.job');
 
-    // Start cron jobs
-    dailyArticleJob.start();
-    imageCleanupJob.start();
-});
+    app.listen(PORT, () => {
+        logger.info(`========================================`);
+        logger.info(`Server running on port ${PORT}`);
+        logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        logger.info(`URL: http://localhost:${PORT}`);
+        logger.info(`========================================`);
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    logger.info('SIGTERM signal received: closing HTTP server');
-    dailyArticleJob.stop();
-    process.exit(0);
-});
+        // Start cron jobs
+        dailyArticleJob.start();
+        imageCleanupJob.start();
+    });
 
-process.on('SIGINT', () => {
-    logger.info('SIGINT signal received: closing HTTP server');
-    dailyArticleJob.stop();
-    process.exit(0);
-});
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+        logger.info('SIGTERM signal received: closing HTTP server');
+        dailyArticleJob.stop();
+        imageCleanupJob.stop();
+        process.exit(0);
+    });
+
+    process.on('SIGINT', () => {
+        logger.info('SIGINT signal received: closing HTTP server');
+        dailyArticleJob.stop();
+        imageCleanupJob.stop();
+        process.exit(0);
+    });
+}
 
 // Export for Vercel serverless
 module.exports = app;
-

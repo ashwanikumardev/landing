@@ -30,81 +30,138 @@ app.get('/api/health', (req, res) => {
 });
 
 // Connect to MongoDB (async, non-blocking)
+let dbConnected = false;
 if (process.env.MONGODB_URI) {
     mongoose.connect(process.env.MONGODB_URI, {
-        maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
+        maxPoolSize: 1,
+        minPoolSize: 0,
+        serverSelectionTimeoutMS: 10000,
         socketTimeoutMS: 45000,
+        family: 4,
     }).then(() => {
+        dbConnected = true;
         console.log('MongoDB connected');
     }).catch(err => {
         console.error('MongoDB connection error:', err.message);
+        dbConnected = false;
     });
 }
 
-// Load routes with comprehensive error handling
-let routesLoaded = false;
+// Load routes with error handling
 try {
     const routes = require('./routes');
     app.use('/', routes);
-    routesLoaded = true;
-    console.log('Routes loaded successfully');
 } catch (error) {
     console.error('Failed to load routes:', error.message);
-    console.error('Stack:', error.stack);
 
-    // Minimal fallback homepage
-    app.get('/', async (req, res) => {
-        try {
-            // Try to get articles from database
-            const Article = require('./models/Article');
-            const articles = await Article.find({ isPublished: true })
-                .sort({ publishedAt: -1 })
-                .limit(10);
-
-            const categories = ['Technology', 'Health', 'Finance', 'Business', 'Lifestyle', 'Education', 'Travel', 'Food', 'Entertainment'];
-
-            res.render('index', {
-                title: 'AugCodex',
-                description: 'Your Daily Source for Tech, Business, and Lifestyle News',
-                articles,
-                categories,
-                stats: {
-                    totalArticles: await Article.countDocuments({ isPublished: true }),
-                    totalViews: await Article.aggregate([{ $group: { _id: null, total: { $sum: '$views' } } }]).then(r => r[0]?.total || 0)
-                }
-            });
-        } catch (dbError) {
-            res.status(503).send(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>AugCodex - Loading</title>
-                    <style>
-                        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
-                        h1 { color: #e63946; }
-                        .error { background: #f8f9fa; padding: 20px; border-left: 4px solid #e63946; }
-                    </style>
-                </head>
-                <body>
-                    <h1>AugCodex</h1>
-                    <div class="error">
-                        <h2>Database Connection Issue</h2>
-                        <p>The site is having trouble connecting to the database.</p>
-                        <p><strong>Error:</strong> ${dbError.message}</p>
-                        <p><strong>MongoDB State:</strong> ${mongoose.connection.readyState}</p>
-                        <p><a href="/api/health">Check Health Status</a></p>
-                        <h3>Troubleshooting:</h3>
-                        <ul>
-                            <li>Verify MongoDB Atlas network access allows 0.0.0.0/0</li>
-                            <li>Check MONGODB_URI environment variable</li>
-                            <li>Ensure database cluster is running</li>
-                        </ul>
+    // Fallback homepage
+    app.get('/', (req, res) => {
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>AugCodex - Automated News Platform</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: Arial, sans-serif;
+                        background: #f8f9fa;
+                        padding: 20px;
+                    }
+                    .container {
+                        max-width: 800px;
+                        margin: 50px auto;
+                        background: white;
+                        padding: 40px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    }
+                    h1 {
+                        color: #e63946;
+                        margin-bottom: 20px;
+                    }
+                    .logo { font-size: 2rem; font-weight: bold; margin-bottom: 30px; }
+                    .logo span { color: #1d3557; }
+                    .status {
+                        background: #fff3cd;
+                        border-left: 4px solid #ffc107;
+                        padding: 15px;
+                        margin: 20px 0;
+                    }
+                    .info {
+                        background: #d1ecf1;
+                        border-left: 4px solid #0c5460;
+                        padding: 15px;
+                        margin: 20px 0;
+                    }
+                    ul { margin: 15px 0 15px 30px; }
+                    li { margin: 8px 0; }
+                    a { color: #e63946; text-decoration: none; }
+                    a:hover { text-decoration: underline; }
+                    .btn {
+                        display: inline-block;
+                        padding: 10px 20px;
+                        background: #e63946;
+                        color: white;
+                        border-radius: 4px;
+                        margin: 10px 10px 10px 0;
+                    }
+                    .btn:hover { background: #c5303e; text-decoration: none; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="logo">Aug<span>Codex</span></div>
+                    <h1>Database Connection Issue</h1>
+                    
+                    <div class="status">
+                        <strong>⚠️ Status:</strong> The site is having trouble connecting to MongoDB Atlas.
                     </div>
-                </body>
-                </html>
-            `);
-        }
+                    
+                    <div class="info">
+                        <strong>ℹ️ What's happening:</strong>
+                        <p>Vercel's serverless functions are unable to maintain a persistent connection to MongoDB Atlas. This is a known limitation of serverless platforms.</p>
+                    </div>
+                    
+                    <h2>Solutions:</h2>
+                    
+                    <h3>Option 1: Deploy to Railway (Recommended)</h3>
+                    <ul>
+                        <li>✅ Supports persistent MongoDB connections</li>
+                        <li>✅ Free tier available</li>
+                        <li>✅ Cron jobs work (automatic article generation)</li>
+                        <li>✅ 5-minute setup</li>
+                    </ul>
+                    <a href="https://railway.app" class="btn" target="_blank">Deploy to Railway</a>
+                    
+                    <h3>Option 2: Use MongoDB Data API</h3>
+                    <ul>
+                        <li>Works with Vercel serverless</li>
+                        <li>Requires MongoDB Atlas Data API setup</li>
+                        <li>HTTP-based access (no persistent connection needed)</li>
+                    </ul>
+                    
+                    <h3>Option 3: Local Development</h3>
+                    <p>The site works perfectly when run locally:</p>
+                    <pre style="background: #f4f4f4; padding: 10px; border-radius: 4px; margin: 10px 0;">npm start</pre>
+                    
+                    <h2>Quick Links:</h2>
+                    <ul>
+                        <li><a href="/api/health">Health Check</a></li>
+                        <li><a href="https://github.com/ashwanikumardev/landing">GitHub Repository</a></li>
+                    </ul>
+                    
+                    <p style="margin-top: 30px; color: #666;">
+                        <strong>MongoDB State:</strong> ${mongoose.connection.readyState} (0=disconnected, 1=connected)<br>
+                        <strong>Environment:</strong> ${process.env.NODE_ENV || 'development'}<br>
+                        <strong>Platform:</strong> ${process.env.VERCEL ? 'Vercel Serverless' : 'Local'}
+                    </p>
+                </div>
+            </body>
+            </html>
+        `);
     });
 }
 
@@ -115,11 +172,11 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-    console.error('Global error handler:', err);
+    console.error('Global error:', err);
     res.status(500).send(`
         <h1>Error</h1>
         <p>${err.message}</p>
-        <pre>${process.env.NODE_ENV !== 'production' ? err.stack : ''}</pre>
+        <p><a href="/">Go Home</a></p>
     `);
 });
 

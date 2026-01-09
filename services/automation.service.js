@@ -248,9 +248,10 @@ class AutomationService {
 
                 // Small delay between articles to avoid rate limiting
                 if (i < count - 1) {
-                    logger.info('Waiting 2 seconds before next article...');
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    logger.info('Waiting 15 seconds before next article to avoid rate limits...');
+                    await new Promise(resolve => setTimeout(resolve, 15000));
                 }
+
             } catch (error) {
                 logger.error(`[${i + 1}/${count}] ✗ Error: ${error.message}`);
                 results.push({

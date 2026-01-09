@@ -84,7 +84,7 @@ router.get('/blog/:slug', async (req, res) => {
     }
 });
 
-// API: Generate single article
+// API: Generate single article (POST)
 router.post('/api/generate', async (req, res) => {
     try {
         const { category } = req.body;
@@ -93,6 +93,32 @@ router.post('/api/generate', async (req, res) => {
 
         res.json({
             success: result.success,
+            article: result.article ? {
+                title: result.article.title,
+                slug: result.article.slug,
+                category: result.article.category,
+                url: `/blog/${result.article.slug}`
+            } : null,
+            error: result.error
+        });
+    } catch (error) {
+        console.error('Generate article error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// API: Generate single article (GET - for easy testing)
+router.get('/api/generate', async (req, res) => {
+    try {
+        console.log('GET /api/generate called');
+        const result = await automationService.runDailyAutomation();
+
+        res.json({
+            success: result.success,
+            message: result.success ? 'Article generated successfully' : 'Failed to generate article',
             article: result.article ? {
                 title: result.article.title,
                 slug: result.article.slug,

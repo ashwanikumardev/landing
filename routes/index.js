@@ -2,183 +2,209 @@ const express = require('express');
 const router = express.Router();
 const articleService = require('../services/article.service');
 const automationService = require('../services/automation.service');
-const dailyArticleJob = require('../jobs/dailyArticle.job');
-const { marked } = require('marked');
-const logger = require('../config/logger');
 
-/**
- * Homepage - Display latest articles
- */
+const categories = [
+    'Technology',
+    'Health', 
+    'Finance',
+    'Business',
+    'Lifestyle',
+    'Education',
+    'Travel',
+    'Food',
+    'Entertainment'
+];
+
+// Homepage
 router.get('/', async (req, res) => {
     try {
-        const articles = await articleService.getLatestArticles(12);
+        const articles = await articleService.getRecentArticles(12);
         const stats = await articleService.getStats();
-        const categories = ['Technology', 'Health', 'Finance', 'Business', 'Lifestyle', 'Education', 'Travel', 'Food', 'Entertainment'];
 
         res.render('index', {
-            title: process.env.SITE_NAME || 'SEO Blog',
-            description: process.env.SITE_DESCRIPTION || 'Automated SEO content generation',
+            title: process.env.SITE_NAME || 'AugCodex',
+            description: process.env.SITE_DESCRIPTION || 'Your Daily Source for News',
             articles,
-            stats,
             categories,
+            stats
         });
     } catch (error) {
-        logger.error(`Error rendering homepage: ${error.message}`);
-        res.status(500).send('Internal Server Error');
+        console.error('Homepage error:', error);
+        res.status(500).send('Error loading homepage');
     }
 });
 
-/**
- * Category page - Display articles by category
- */
+// Category page
 router.get('/category/:category', async (req, res) => {
     try {
-        const category = req.params.category;
-        const articles = await articleService.getArticlesByCategory(category, 20);
-        const stats = await articleService.getStats();
-        const categories = ['Technology', 'Health', 'Finance', 'Business', 'Lifestyle', 'Education', 'Travel', 'Food', 'Entertainment'];
+        const { category } = req.params;
+        const articles = await articleService.getArticlesByCategory(category);
 
         res.render('category', {
-            title: `${category} Articles - ${process.env.SITE_NAME}`,
-            description: `Browse ${category} articles on ${process.env.SITE_NAME}`,
+            title: `${category} - ${process.env.SITE_NAME}`,
+            description: `Latest ${category} articles`,
             category,
-            articles,
-            stats,
             categories,
+            articles
         });
     } catch (error) {
-        logger.error(`Error rendering category page: ${error.message}`);
-        res.status(500).send('Internal Server Error');
+        console.error('Category page error:', error);
+        res.status(500).send('Error loading category');
     }
 });
 
-/**
- * Individual blog article page
- */
+// Article page
 router.get('/blog/:slug', async (req, res) => {
     try {
         const article = await articleService.getArticleBySlug(req.params.slug);
-
+        
         if (!article) {
             return res.status(404).render('404', {
-                title: 'Article Not Found',
-                message: 'The article you are looking for does not exist.',
+                title: '404 - Article Not Found',
+                message: 'The article you are looking for does not exist.'
             });
         }
 
-        // Convert markdown to HTML
-        const contentHtml = marked(article.content);
+        // Increment views
+        await articleService.incrementViews(article._id);
 
         res.render('article', {
             title: article.metaTitle,
             description: article.metaDescription,
-            article: {
-                ...article.toObject(),
-                contentHtml,
-            },
-            siteUrl: process.env.SITE_URL || 'http://localhost:3000',
+            article,
+            siteUrl: process.env.SITE_URL || 'http://localhost:3000'
         });
     } catch (error) {
-        logger.error(`Error rendering article: ${error.message}`);
-        res.status(500).send('Internal Server Error');
+        console.error('Article page error:', error);
+        res.status(500).send('Error loading article');
     }
 });
 
-/**
- * Dynamic sitemap.xml generation
- */
+// API: Generate single article
+router.post('/api/generate', async (req, res) => {
+    try {
+        const { category } = req.body;
+        
+        const result = await automationService.runDailyAutomation(category);
+        
+        res.json({
+            success: result.success,
+            article: result.article ? {
+                title: result.article.title,
+                slug: result.article.slug,
+                category: result.article.category,
+                url: `/blog/${result.article.slug}`
+            } : null,
+            error: result.error
+        });
+    } catch (error) {
+        console.error('Generate article error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// API: Generate multiple articles
+router.post('/api/generate-multiple', async (req, res) => {
+    try {
+        const { count = 6 } = req.body;
+        
+        const results = await automationService.runMultipleArticles(count);
+        
+        const successful = results.filter(r => r.success);
+        
+        res.json({
+            success: true,
+            total: results.length,
+            successful: successful.length,
+            failed: results.length - successful.length,
+            articles: successful.map(r => ({
+                title: r.article.title,
+                category: r.article.category,
+                url: `/blog/${r.article.slug}`
+            }))
+        });
+    } catch (error) {
+        console.error('Generate multiple articles error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// API: Cron endpoint for Vercel Cron
+router.get('/api/cron/generate-articles', async (req, res) => {
+    try {
+        // Verify cron secret for security
+        const cronSecret = req.headers['authorization'];
+        if (cronSecret !== `Bearer ${process.env.CRON_SECRET}`) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Generate 2 articles
+        const results = await automationService.runMultipleArticles(2);
+        
+        const successful = results.filter(r => r.success);
+        
+        res.json({
+            success: true,
+            generated: successful.length,
+            articles: successful.map(r => r.article.title)
+        });
+    } catch (error) {
+        console.error('Cron generate error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Sitemap
 router.get('/sitemap.xml', async (req, res) => {
     try {
-        const articles = await articleService.getAllPublishedArticles();
-        const siteUrl = process.env.SITE_URL || 'http://localhost:3000';
+        const articles = await articleService.getAllArticles();
+        const baseUrl = process.env.SITE_URL || 'http://localhost:3000';
 
-        let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
-        sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+        
         // Homepage
-        sitemap += '  <url>\n';
-        sitemap += `    <loc>${siteUrl}/</loc>\n`;
-        sitemap += `    <lastmod>${new Date().toISOString()}</lastmod>\n`;
-        sitemap += '    <changefreq>daily</changefreq>\n';
-        sitemap += '    <priority>1.0</priority>\n';
-        sitemap += '  </url>\n';
-
+        xml += `  <url>\n    <loc>${baseUrl}/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+        
+        // Categories
+        categories.forEach(category => {
+            xml += `  <url>\n    <loc>${baseUrl}/category/${category}</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+        });
+        
         // Articles
         articles.forEach(article => {
-            sitemap += '  <url>\n';
-            sitemap += `    <loc>${siteUrl}/blog/${article.slug}</loc>\n`;
-            sitemap += `    <lastmod>${article.publishedAt.toISOString()}</lastmod>\n`;
-            sitemap += '    <changefreq>weekly</changefreq>\n';
-            sitemap += '    <priority>0.8</priority>\n';
-            sitemap += '  </url>\n';
+            xml += `  <url>\n    <loc>${baseUrl}/blog/${article.slug}</loc>\n    <lastmod>${article.publishedAt.toISOString()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
         });
-
-        sitemap += '</urlset>';
+        
+        xml += '</urlset>';
 
         res.header('Content-Type', 'application/xml');
-        res.send(sitemap);
+        res.send(xml);
     } catch (error) {
-        logger.error(`Error generating sitemap: ${error.message}`);
+        console.error('Sitemap error:', error);
         res.status(500).send('Error generating sitemap');
     }
 });
 
-/**
- * Robots.txt
- */
+// Robots.txt
 router.get('/robots.txt', (req, res) => {
-    const siteUrl = process.env.SITE_URL || 'http://localhost:3000';
-
-    const robotsTxt = `User-agent: *
-Allow: /
-
-Sitemap: ${siteUrl}/sitemap.xml`;
-
-    res.header('Content-Type', 'text/plain');
-    res.send(robotsTxt);
+    const baseUrl = process.env.SITE_URL || 'http://localhost:3000';
+    res.type('text/plain');
+    res.send(`User-agent: *\nAllow: /\nSitemap: ${baseUrl}/sitemap.xml`);
 });
 
-/**
- * Health check endpoint
- */
+// Health check
 router.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-    });
-});
-
-/**
- * API: Manual article generation trigger (for testing)
- */
-router.post('/api/generate', async (req, res) => {
-    try {
-        logger.info('Manual article generation triggered via API');
-
-        const result = await dailyArticleJob.trigger();
-
-        res.json(result);
-    } catch (error) {
-        logger.error(`API generation error: ${error.message}`);
-        res.status(500).json({
-            success: false,
-            error: error.message,
-        });
-    }
-});
-
-/**
- * API: Get automation status
- */
-router.get('/api/status', (req, res) => {
-    const jobStatus = dailyArticleJob.getStatus();
-    const automationStatus = automationService.getStatus();
-
-    res.json({
-        job: jobStatus,
-        automation: automationStatus,
-    });
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 module.exports = router;

@@ -196,7 +196,7 @@ router.get('/api/cron/generate-articles', async (req, res) => {
 // Sitemap
 router.get('/sitemap.xml', async (req, res) => {
     try {
-        const articles = await articleService.getAllArticles();
+        const articles = await articleService.getRecentArticles(1000); // Get all articles
         const baseUrl = process.env.SITE_URL || 'http://localhost:3000';
 
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -212,7 +212,8 @@ router.get('/sitemap.xml', async (req, res) => {
 
         // Articles
         articles.forEach(article => {
-            xml += `  <url>\n    <loc>${baseUrl}/blog/${article.slug}</loc>\n    <lastmod>${article.publishedAt.toISOString()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+            const lastmod = article.publishedAt ? article.publishedAt.toISOString() : new Date().toISOString();
+            xml += `  <url>\n    <loc>${baseUrl}/blog/${article.slug}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
         });
 
         xml += '</urlset>';

@@ -140,6 +140,60 @@ class ArticleService {
             throw error;
         }
     }
+
+    /**
+     * Get recent articles with full details
+     * @param {number} limit - Number of articles to return
+     * @returns {Promise<Array>} Array of articles
+     */
+    async getRecentArticles(limit = 12) {
+        try {
+            const articles = await Article.find({ isPublished: true })
+                .sort({ publishedAt: -1 })
+                .limit(limit);
+            return articles;
+        } catch (error) {
+            logger.error(`Error getting recent articles: ${error.message}`);
+            return [];
+        }
+    }
+
+    /**
+     * Get articles by category
+     * @param {string} category - Category name
+     * @param {number} limit - Number of articles to return
+     * @returns {Promise<Array>} Array of articles
+     */
+    async getArticlesByCategory(category, limit = 20) {
+        try {
+            const articles = await Article.find({
+                category,
+                isPublished: true
+            })
+                .sort({ publishedAt: -1 })
+                .limit(limit);
+            return articles;
+        } catch (error) {
+            logger.error(`Error getting articles by category: ${error.message}`);
+            return [];
+        }
+    }
+
+    /**
+     * Increment article views
+     * @param {string} articleId - Article ID
+     * @returns {Promise<void>}
+     */
+    async incrementViews(articleId) {
+        try {
+            await Article.findByIdAndUpdate(articleId, {
+                $inc: { views: 1 }
+            });
+        } catch (error) {
+            logger.error(`Error incrementing views: ${error.message}`);
+        }
+    }
 }
 
 module.exports = new ArticleService();
+

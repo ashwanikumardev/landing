@@ -5,7 +5,7 @@ const automationService = require('../services/automation.service');
 
 const categories = [
     'Technology',
-    'Health', 
+    'Health',
     'Finance',
     'Business',
     'Lifestyle',
@@ -57,7 +57,7 @@ router.get('/category/:category', async (req, res) => {
 router.get('/blog/:slug', async (req, res) => {
     try {
         const article = await articleService.getArticleBySlug(req.params.slug);
-        
+
         if (!article) {
             return res.status(404).render('404', {
                 title: '404 - Article Not Found',
@@ -67,6 +67,10 @@ router.get('/blog/:slug', async (req, res) => {
 
         // Increment views
         await articleService.incrementViews(article._id);
+
+        // Convert markdown to HTML
+        const marked = require('marked');
+        article.contentHtml = marked.parse(article.content || '');
 
         res.render('article', {
             title: article.metaTitle,
@@ -84,9 +88,9 @@ router.get('/blog/:slug', async (req, res) => {
 router.post('/api/generate', async (req, res) => {
     try {
         const { category } = req.body;
-        
+
         const result = await automationService.runDailyAutomation(category);
-        
+
         res.json({
             success: result.success,
             article: result.article ? {
@@ -110,11 +114,11 @@ router.post('/api/generate', async (req, res) => {
 router.post('/api/generate-multiple', async (req, res) => {
     try {
         const { count = 6 } = req.body;
-        
+
         const results = await automationService.runMultipleArticles(count);
-        
+
         const successful = results.filter(r => r.success);
-        
+
         res.json({
             success: true,
             total: results.length,
@@ -146,9 +150,9 @@ router.get('/api/cron/generate-articles', async (req, res) => {
 
         // Generate 2 articles
         const results = await automationService.runMultipleArticles(2);
-        
+
         const successful = results.filter(r => r.success);
-        
+
         res.json({
             success: true,
             generated: successful.length,
@@ -171,20 +175,20 @@ router.get('/sitemap.xml', async (req, res) => {
 
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
         xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-        
+
         // Homepage
         xml += `  <url>\n    <loc>${baseUrl}/</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
-        
+
         // Categories
         categories.forEach(category => {
             xml += `  <url>\n    <loc>${baseUrl}/category/${category}</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
         });
-        
+
         // Articles
         articles.forEach(article => {
             xml += `  <url>\n    <loc>${baseUrl}/blog/${article.slug}</loc>\n    <lastmod>${article.publishedAt.toISOString()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
         });
-        
+
         xml += '</urlset>';
 
         res.header('Content-Type', 'application/xml');

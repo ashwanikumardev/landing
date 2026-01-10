@@ -4,66 +4,90 @@ class GeminiService {
     constructor() {
         this.apiKey = process.env.GEMINI_API_KEY;
         this.baseURL = 'https://generativelanguage.googleapis.com/v1beta/models';
-        // Use gemini-2.5-flash (confirmed available via ListModels)
-        this.model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+        // Use gemini-1.5-flash for more stable free tier (15 RPM)
+        this.model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
     }
 
     /**
-     * Make a request to Gemini API
+     * Make a request to Gemini API with automatic retry on rate limits
      * @param {string} prompt - The prompt to send
      * @param {Object} options - Additional options
      * @returns {Promise<string>} Generated content
      */
     async generateContent(prompt, options = {}) {
-        try {
-            const {
-                temperature = 0.7,
-                maxOutputTokens = 2048,
-                systemInstruction = null
-            } = options;
+        const maxRetries = 3;
 
-            // Build the request body
-            const requestBody = {
-                contents: [{
-                    parts: [{
-                        text: systemInstruction ? `${systemInstruction}\n\n${prompt}` : prompt
-                    }]
-                }],
-                generationConfig: {
-                    temperature,
-                    maxOutputTokens,
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const {
+                    temperature = 0.7,
+                    maxOutputTokens = 2048,
+                    systemInstruction = null
+                } = options;
+
+                // Build the request body
+                const requestBody = {
+                    contents: [{
+                        parts: [{
+                            text: systemInstruction ? `${systemInstruction}\n\n${prompt}` : prompt
+                        }]
+                    }],
+                    generationConfig: {
+                        temperature,
+                        maxOutputTokens,
+                    }
+                };
+
+                const url = `${this.baseURL}/${this.model}:generateContent?key=${this.apiKey}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const errorMessage = data.error?.message || 'Gemini API error';
+
+                    // Check if it's a rate limit error (429 or quota exceeded)
+                    if (response.status === 429 || errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('rate limit')) {
+                        if (attempt < maxRetries) {
+                            // Extract wait time from error message or use exponential backoff
+                            const waitMatch = errorMessage.match(/retry in (\d+\.?\d*)/);
+                            const waitTime = waitMatch ? Math.ceil(parseFloat(waitMatch[1]) * 1000) : Math.pow(2, attempt) * 5000;
+
+                            logger.warn(`Rate limit hit, waiting ${(waitTime / 1000).toFixed(1)}s before retry (attempt ${attempt}/${maxRetries})`);
+                            await new Promise(resolve => setTimeout(resolve, waitTime));
+                            continue; // Retry
+                        }
+                    }
+
+                    logger.error(`Gemini API Error: ${errorMessage}`);
+                    throw new Error(errorMessage);
                 }
-            };
 
-            const url = `${this.baseURL}/${this.model}:generateContent?key=${this.apiKey}`;
+                // Extract the generated text
+                const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody)
-            });
+                if (!generatedText) {
+                    throw new Error('No content generated from Gemini API');
+                }
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                const errorMessage = data.error?.message || 'Gemini API error';
-                logger.error(`Gemini API Error: ${errorMessage}`);
-                throw new Error(errorMessage);
+                return generatedText.trim();
+            } catch (error) {
+                if (attempt === maxRetries) {
+                    logger.error(`Gemini API request failed after ${maxRetries} attempts: ${error.message}`);
+                    throw error;
+                }
+                // If not a rate limit error, throw immediately
+                if (!error.message.toLowerCase().includes('quota') && !error.message.toLowerCase().includes('rate limit')) {
+                    throw error;
+                }
             }
-
-            // Extract the generated text
-            const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            if (!generatedText) {
-                throw new Error('No content generated from Gemini API');
-            }
-
-            return generatedText.trim();
-        } catch (error) {
-            logger.error(`Gemini API request failed: ${error.message}`);
-            throw error;
         }
     }
 
@@ -97,7 +121,7 @@ Return ONLY the complete title, nothing else.`;
             const title = await this.generateContent(prompt, {
                 systemInstruction,
                 temperature: 0.7,
-                maxOutputTokens: 150
+                maxOutputTokens: 150  // Increased to ensure complete titles
             });
 
             // Extract keyword (simplified - remove year and common words)

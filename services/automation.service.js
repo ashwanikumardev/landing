@@ -1,5 +1,5 @@
 const trendsService = require('./trends.service');
-const openaiService = require('./openai.service');
+const geminiService = require('./gemini.service');
 const articleService = require('./article.service');
 const imageService = require('./image.service');
 const logger = require('../config/logger');
@@ -123,25 +123,25 @@ class AutomationService {
 
             // Step 2: Convert to SEO title
             logger.info('Step 2: Converting to SEO title...');
-            const { title, keyword } = await openaiService.convertTrendToTitle(trendingTopic);
+            const { title, keyword } = await geminiService.convertTrendToTitle(trendingTopic);
             logger.info(`✓ Title: ${title}`);
             logger.info(`✓ Keyword: ${keyword}`);
 
             // Step 3: Generate full article
             logger.info('Step 3: Generating full article...');
-            const content = await openaiService.generateArticle(title, keyword);
+            const content = await geminiService.generateArticle(title, keyword);
             logger.info(`✓ Article generated (${content.length} characters)`);
 
             // Step 4: Generate meta data
             logger.info('Step 4: Generating meta data...');
-            const { metaTitle, metaDescription, slug } = await openaiService.generateMetaData(title, content);
+            const { metaTitle, metaDescription, slug } = await geminiService.generateMetaData(title, content);
             logger.info(`✓ Meta title: ${metaTitle}`);
             logger.info(`✓ Meta description: ${metaDescription}`);
             logger.info(`✓ Slug: ${slug}`);
 
             // Step 5: Extract FAQs
             logger.info('Step 5: Extracting FAQs...');
-            const faqs = openaiService.extractFAQs(content);
+            const faqs = geminiService.extractFAQs(content);
             logger.info(`✓ Extracted ${faqs.length} FAQs`);
 
             // Step 6: Generate thumbnail image

@@ -5,18 +5,32 @@ const logger = require('../config/logger');
 
 class ImageService {
     constructor() {
-        this.client = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-            baseURL: 'https://openrouter.ai/api/v1',
-            defaultHeaders: {
-                'HTTP-Referer': process.env.SITE_URL || 'http://localhost:3000',
-                'X-Title': process.env.SITE_NAME || 'AugCodex',
-            }
-        });
+        // Make OpenAI optional - if not configured, image generation will be skipped
+        const apiKey = process.env.OPENAI_API_KEY;
 
-        // Use flux-schnell for cheapest, fastest image generation
-        this.imageModel = 'black-forest-labs/flux-schnell';
-        this.imageSize = '512x512'; // Smallest practical size
+        if (apiKey) {
+            try {
+                this.client = new OpenAI({
+                    apiKey: apiKey,
+                    baseURL: 'https://openrouter.ai/api/v1',
+                    defaultHeaders: {
+                        'HTTP-Referer': process.env.SITE_URL || 'http://localhost:3000',
+                        'X-Title': process.env.SITE_NAME || 'AugCodex',
+                    }
+                });
+                this.imageModel = 'black-forest-labs/flux-schnell';
+                this.enabled = true;
+                logger.info('Image service initialized with OpenRouter');
+            } catch (error) {
+                logger.warn(`Image service initialization failed: ${error.message}`);
+                this.enabled = false;
+            }
+        } else {
+            logger.info('Image service disabled (OPENAI_API_KEY not set)');
+            this.enabled = false;
+        }
+
+        this.imageSize = '512x512';
         this.thumbnailDir = path.join(__dirname, '../public/images/thumbnails');
     }
 
@@ -40,6 +54,12 @@ class ImageService {
      */
     async generateThumbnail(title, category) {
         try {
+            // Skip if image service is not enabled
+            if (!this.enabled) {
+                logger.info('Image generation skipped (service disabled)');
+                return null;
+            }
+
             await this.ensureThumbnailDir();
 
             logger.info(`Generating thumbnail for: ${title}`);

@@ -5,7 +5,7 @@
 ### Prerequisites
 - Node.js installed ✅ (Already done)
 - MongoDB (local or Atlas account)
-- OpenAI API key
+- Google Gemini API key (FREE)
 
 ### Step 1: Configure Environment (REQUIRED)
 
@@ -26,8 +26,9 @@ MONGODB_URI=mongodb://localhost:27017/seo-blog
 # Option 2: MongoDB Atlas (recommended)
 # MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/seo-blog
 
-# OpenAI API Key (REQUIRED)
-OPENAI_API_KEY=sk-your-actual-openai-api-key-here
+# Google Gemini API Key (REQUIRED - FREE)
+GEMINI_API_KEY=AIzaSyBDhR9DEF8csUCSRTbzrErcYbXHKrCQzyM
+GEMINI_MODEL=gemini-2.5-flash
 
 # Other settings (optional, defaults are fine)
 PORT=3000
@@ -48,13 +49,18 @@ SITE_NAME=My SEO Blog
 4. Get connection string
 5. Add to `.env`
 
-### Step 3: Get OpenAI API Key
+### Step 3: Get FREE Gemini API Key
 
-1. Go to [platform.openai.com](https://platform.openai.com)
-2. Sign up or log in
-3. Go to API Keys section
+1. Go to [aistudio.google.com](https://aistudio.google.com)
+2. Sign in with your Google account
+3. Click "Get API Key"
 4. Create new API key
 5. Copy and add to `.env`
+
+**Free Tier Includes:**
+- 15 requests per minute
+- 1,500 requests per day
+- Perfect for automated blogging!
 
 ### Step 4: Start the Server
 
@@ -85,7 +91,7 @@ Then refresh `http://localhost:3000` to see your first article!
 # Test Google Trends API
 npm run test:trends
 
-# Test OpenAI API
+# Test Gemini API
 npm run test:openai
 
 # Test database connection
@@ -125,10 +131,10 @@ Check logs in the `logs/` directory:
 - Check connection string in `.env`
 - For Atlas, whitelist your IP
 
-### OpenAI API Error
-- Verify API key is correct
-- Check you have credits
-- Visit [platform.openai.com/usage](https://platform.openai.com/usage)
+### Gemini API Error
+- Verify API key is correct in `.env`
+- Check free tier limits (15 RPM, 1,500 RPD)
+- Visit [aistudio.google.com](https://aistudio.google.com)
 
 ### Port Already in Use
 Change port in `.env`:
